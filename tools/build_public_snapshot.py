@@ -58,14 +58,38 @@ def main() -> None:
 
     if RUNTIME_MARKER not in source:
         save_marker = "  function saveStoredPayload(payload) {"
-        helper = """  function publicSafeArticles(articles) {
+        helper = """  function safePublisherImage(article) {
+    try {
+      const image = new URL(article.image);
+      const publisher = new URL(article.sourceUrl || article.url);
+      const imageHost = image.hostname.replace(/^www\\./, "");
+      const publisherHost = publisher.hostname.replace(/^www\\./, "");
+      const samePublisher = imageHost === publisherHost
+        || imageHost.endsWith(`.${publisherHost}`);
+      return image.protocol === "https:" && samePublisher ? image.href : "";
+    } catch {
+      return "";
+    }
+  }
+
+  function publicSafeArticles(articles) {
     return articles.map((article) => {
       const summary = String(article.summary || article.readerText || "")
         .replace(/<[^>]+>/g, " ")
         .replace(/\\s+/g, " ")
         .trim()
-        .slice(0, 280);
-      return { ...article, summary, readerText: summary, image: "" };
+        .slice(0, 480);
+      const readerText = String(article.readerText || article.summary || "")
+        .replace(/<[^>]+>/g, " ")
+        .replace(/\\s+/g, " ")
+        .trim()
+        .slice(0, 1200);
+      return {
+        ...article,
+        summary,
+        readerText: readerText || summary,
+        image: safePublisherImage(article)
+      };
     });
   }
 
@@ -76,14 +100,38 @@ def main() -> None:
 
     if source.count(RUNTIME_MARKER) < 2:
         main_marker = '<script>\n"use strict";\n\n'
-        main_helper = """function publicSafeArticles(articles) {
+        main_helper = """function safePublisherImage(article) {
+  try {
+    const image = new URL(article.image);
+    const publisher = new URL(article.sourceUrl || article.url);
+    const imageHost = image.hostname.replace(/^www\\./, "");
+    const publisherHost = publisher.hostname.replace(/^www\\./, "");
+    const samePublisher = imageHost === publisherHost
+      || imageHost.endsWith(`.${publisherHost}`);
+    return image.protocol === "https:" && samePublisher ? image.href : "";
+  } catch {
+    return "";
+  }
+}
+
+function publicSafeArticles(articles) {
   return articles.map((article) => {
     const summary = String(article.summary || article.readerText || "")
       .replace(/<[^>]+>/g, " ")
       .replace(/\\s+/g, " ")
       .trim()
-      .slice(0, 280);
-    return { ...article, summary, readerText: summary, image: "" };
+      .slice(0, 480);
+    const readerText = String(article.readerText || article.summary || "")
+      .replace(/<[^>]+>/g, " ")
+      .replace(/\\s+/g, " ")
+      .trim()
+      .slice(0, 1200);
+    return {
+      ...article,
+      summary,
+      readerText: readerText || summary,
+      image: safePublisherImage(article)
+    };
   });
 }
 

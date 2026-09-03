@@ -9,6 +9,16 @@ and the prominent reader action open the complete article on the original
 publisher website in a new tab. This avoids unreliable iframe embedding and
 does not republish full copyrighted articles.
 
+After a successful live refresh, PULS can display source-hosted HTTPS images
+published through the source feed/API and a reader excerpt capped at 1,200
+characters. Images from unrelated hosts are discarded. The committed offline
+snapshot remains limited to 280-character text previews with no publisher
+images.
+
+DeFapt and Veridica use their official RSS endpoints through the existing
+browser-compatible RSS conversion fallback when the publishers do not allow
+direct cross-origin feed access.
+
 Live refresh runs in each visitor's browser against the public publisher/RSS
 interfaces and fallback services already configured in PULS. Availability,
 rate limits, CORS behavior, and publisher terms remain external dependencies.

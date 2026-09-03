@@ -1936,7 +1936,8 @@ h1 em {
       name: "DeFapt",
       color: "#c59b1a",
       homeUrl: "https://defapt.ro/",
-      kind: "defapt",
+      kind: "rss",
+      feedUrl: "https://defapt.ro/rss",
       framable: false,
     },
     {
@@ -1944,7 +1945,8 @@ h1 em {
       name: "Veridica",
       color: "#7057b8",
       homeUrl: "https://www.veridica.ro/",
-      kind: "veridica",
+      kind: "rss",
+      feedUrl: "https://www.veridica.ro/feeds",
       framable: true,
     },
   ];
@@ -2089,14 +2091,38 @@ h1 em {
     }
   }
 
+  function safePublisherImage(article) {
+    try {
+      const image = new URL(article.image);
+      const publisher = new URL(article.sourceUrl || article.url);
+      const imageHost = image.hostname.replace(/^www\./, "");
+      const publisherHost = publisher.hostname.replace(/^www\./, "");
+      const samePublisher = imageHost === publisherHost
+        || imageHost.endsWith(`.${publisherHost}`);
+      return image.protocol === "https:" && samePublisher ? image.href : "";
+    } catch {
+      return "";
+    }
+  }
+
   function publicSafeArticles(articles) {
     return articles.map((article) => {
       const summary = String(article.summary || article.readerText || "")
         .replace(/<[^>]+>/g, " ")
         .replace(/\s+/g, " ")
         .trim()
-        .slice(0, 280);
-      return { ...article, summary, readerText: summary, image: "" };
+        .slice(0, 480);
+      const readerText = String(article.readerText || article.summary || "")
+        .replace(/<[^>]+>/g, " ")
+        .replace(/\s+/g, " ")
+        .trim()
+        .slice(0, 1200);
+      return {
+        ...article,
+        summary,
+        readerText: readerText || summary,
+        image: safePublisherImage(article)
+      };
     });
   }
 
@@ -3061,14 +3087,38 @@ h1 em {
 <script>
 "use strict";
 
+function safePublisherImage(article) {
+  try {
+    const image = new URL(article.image);
+    const publisher = new URL(article.sourceUrl || article.url);
+    const imageHost = image.hostname.replace(/^www\./, "");
+    const publisherHost = publisher.hostname.replace(/^www\./, "");
+    const samePublisher = imageHost === publisherHost
+      || imageHost.endsWith(`.${publisherHost}`);
+    return image.protocol === "https:" && samePublisher ? image.href : "";
+  } catch {
+    return "";
+  }
+}
+
 function publicSafeArticles(articles) {
   return articles.map((article) => {
     const summary = String(article.summary || article.readerText || "")
       .replace(/<[^>]+>/g, " ")
       .replace(/\s+/g, " ")
       .trim()
-      .slice(0, 280);
-    return { ...article, summary, readerText: summary, image: "" };
+      .slice(0, 480);
+    const readerText = String(article.readerText || article.summary || "")
+      .replace(/<[^>]+>/g, " ")
+      .replace(/\s+/g, " ")
+      .trim()
+      .slice(0, 1200);
+    return {
+      ...article,
+      summary,
+      readerText: readerText || summary,
+      image: safePublisherImage(article)
+    };
   });
 }
 
