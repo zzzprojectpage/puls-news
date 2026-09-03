@@ -1792,9 +1792,15 @@ h1 em {
             <button id="reader-preview-tab" type="button" role="tab" aria-selected="true" aria-controls="reader-preview">
               Previzualizare
             </button>
-            <button id="reader-full-tab" type="button" role="tab" aria-selected="false" aria-controls="reader-webview">
-              Articol integral
-            </button>
+            <a
+              class="reader-smry-link"
+              id="reader-full-tab"
+              href="#"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Articol integral ↗
+            </a>
           </div>
           <a class="reader-smry-link" href="https://smry.ai/" target="_blank" rel="noopener noreferrer" aria-label="Deschide SMRY.ai într-o filă nouă">
             SMRY.ai
@@ -1822,14 +1828,15 @@ h1 em {
           </div>
           <h2 id="reader-title"></h2>
           <p class="reader-byline" id="reader-byline"></p>
-          <div class="reader-text" id="reader-text"></div>
           <div class="reader-disclaimer">
-            Aceasta este previzualizarea furnizată de fluxul RSS. Pentru articolul integral, continuă pe site-ul publicației.
+            Versiunea publică PULS afișează o previzualizare scurtă. Articolul
+            integral rămâne pe site-ul publicației.
           </div>
           <a class="original-link" id="original-link" href="#" target="_blank" rel="noopener noreferrer">
-            Citește articolul integral
+            Citește articolul integral la publicație
             <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M7 17 17 7M8 7h9v9"/></svg>
           </a>
+          <div class="reader-text" id="reader-text"></div>
         </article>
       </div>
 
@@ -3362,7 +3369,7 @@ function buildArticleCard(article, index) {
   const card = createElement("article", `story-card${index === 0 ? " story-card--lead" : ""}`);
   card.tabIndex = 0;
   card.setAttribute("role", "button");
-  card.setAttribute("aria-label", `Deschide previzualizarea: ${article.title}`);
+  card.setAttribute("aria-label", `Deschide previzualizarea și linkul către articol: ${article.title}`);
   card.style.setProperty("--source-color", article.sourceColor);
   card.style.setProperty("--rank", String(index));
 
@@ -3438,11 +3445,12 @@ function openReader(articleId) {
   dom.originalLink.setAttribute("aria-label", `Citește articolul integral pe ${article.source}`);
   dom.readerWebviewLink.href = article.url;
   dom.readerWebviewSource.textContent = `Pagina originală · ${article.source}`;
-  const canFrame = article.framable === true || framableSources.has(article.sourceId);
-  dom.readerFullTab.disabled = !canFrame;
-  dom.readerFullTab.title = dom.readerFullTab.disabled
-    ? `${article.source} nu permite afișarea paginii în interiorul altei aplicații`
-    : `Încarcă pagina originală de pe ${article.source}`;
+  dom.readerFullTab.href = article.url;
+  dom.readerFullTab.title = `Deschide articolul original pe ${article.source}`;
+  dom.readerFullTab.setAttribute(
+    "aria-label",
+    `Deschide articolul integral pe ${article.source} într-o filă nouă`
+  );
 
   dom.readerText.replaceChildren();
   const paragraphs = (article.readerText || article.summary || "")
@@ -3606,7 +3614,6 @@ dom.clearFilters.addEventListener("click", () => {
 });
 dom.readerClose.addEventListener("click", closeReader);
 dom.readerPreviewTab.addEventListener("click", () => setReaderMode("preview"));
-dom.readerFullTab.addEventListener("click", () => setReaderMode("full"));
 dom.previous.addEventListener("click", () => moveReader(-1));
 dom.next.addEventListener("click", () => moveReader(1));
 dom.copyButton.addEventListener("click", copyActiveLink);
