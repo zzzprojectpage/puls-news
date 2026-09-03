@@ -1767,6 +1767,11 @@ h1 em {
           </button>
         </div>
         <p class="source-form-status" id="source-form-status" aria-live="polite"></p>
+        <p class="source-storage-note">
+          Sursele se salvează numai în acest browser și profil. Modul
+          InPrivate/Incognito le șterge după închiderea tuturor ferestrelor și
+          nu le sincronizează cu alte dispozitive.
+        </p>
       </form>
 
       <section class="source-list-section" aria-labelledby="source-list-title">
@@ -2191,19 +2196,29 @@ h1 em {
         .map(sanitizeSource)
         .filter(Boolean)
         .slice(0, MAX_SOURCES);
-    } catch {
+    } catch (error) {
+      console.warn("Configurația surselor nu a putut fi citită.", error);
+      window.PULS_STORAGE_WARNING =
+        "Browserul nu a putut citi sursele salvate. Verifică permisiunile pentru datele site-ului.";
       return DEFAULT_SOURCES.map(cloneSource);
     }
   }
 
   function persistSourceConfig() {
+    const serialized = JSON.stringify({ version: 1, sources: SOURCE_CONFIG });
     try {
-      localStorage.setItem(
-        SOURCE_CONFIG_KEY,
-        JSON.stringify({ version: 1, sources: SOURCE_CONFIG })
+      localStorage.setItem(SOURCE_CONFIG_KEY, serialized);
+      if (localStorage.getItem(SOURCE_CONFIG_KEY) !== serialized) {
+        throw new Error("Verificarea datelor salvate a eșuat.");
+      }
+      window.PULS_STORAGE_WARNING = "";
+    } catch (error) {
+      window.PULS_STORAGE_WARNING =
+        "Browserul nu permite salvarea surselor în acest profil.";
+      throw new Error(
+        "Sursa nu poate fi memorată. Folosește o fereastră normală și permite datele site-ului.",
+        { cause: error }
       );
-    } catch {
-      throw new Error("Browserul nu permite salvarea surselor pentru acest fișier.");
     }
   }
 
@@ -2978,7 +2993,11 @@ h1 em {
 
   window.PULS_AUTO_REFRESH = true;
   window.fetchStandaloneNews = async ({ force = false, signal } = {}) => {
-    if (!force) return snapshotPayload();
+    if (!force) {
+      const payload = snapshotPayload();
+      if (payload.articles.length) saveStoredPayload(payload);
+      return payload;
+    }
 
     const activeSources = SOURCE_CONFIG.map(cloneSource);
     const results = await Promise.allSettled(
@@ -3634,7 +3653,11 @@ function renderSourceManager() {
 }
 
 function openSourceManager() {
-  setSourceFormStatus();
+  if (window.PULS_STORAGE_WARNING) {
+    setSourceFormStatus(window.PULS_STORAGE_WARNING, "error");
+  } else {
+    setSourceFormStatus();
+  }
   renderSourceManager();
   dom.sourceDialog.showModal();
   document.body.classList.add("modal-open");
@@ -3692,7 +3715,10 @@ dom.sourceForm.addEventListener("submit", async (event) => {
     dom.sourceUrl.value = "";
     await loadNews(false);
     renderSourceManager();
-    setSourceFormStatus(`${source.name} a fost adăugată.`, "success");
+    setSourceFormStatus(
+      `${source.name} a fost adăugată și salvată în acest browser.`,
+      "success"
+    );
   } catch (error) {
     setSourceFormStatus(error.message || "Sursa nu a putut fi adăugată.", "error");
   } finally {

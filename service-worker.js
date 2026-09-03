@@ -1,4 +1,4 @@
-const CACHE_NAME = "puls-news-shell-v3";
+const CACHE_NAME = "puls-news-shell-v4";
 const APP_SHELL = [
   "./",
   "./index.html",
